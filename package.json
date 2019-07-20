@@ -1,0 +1,36 @@
+{
+  "name": "ecl-rain-calc",
+  "version": "0.1.0",
+  "description": "Module for calculating rain affected matches",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "jest --config jestconfig.json",
+    "testWatch": "jest --watchAll --config jestconfig.json",
+    "build": "rm -rf ./dist && tsc",
+    "watch": "tsc -w",
+    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
+    "lint": "tslint -p tsconfig.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hudl/npm-hudl-grail.git"
+  },
+  "author": "Chris Hunt",
+  "bugs": {
+    "url": "https://github.com/hudl/npm-hudl-grail/issues"
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.13",
+    "chai": "^4.2.0",
+    "jest": "^24.8.0",
+    "mocha": "^6.1.4",
+    "prettier": "^1.17.1",
+    "ts-jest": "^24.0.2",
+    "tslint": "^5.17.0",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.5.1"
+  },
+  "dependencies": {
+  }
+}
