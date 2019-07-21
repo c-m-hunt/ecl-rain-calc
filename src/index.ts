@@ -1,35 +1,41 @@
 export interface Response {
-  target: number;
+  target?: number;
   overs: number;
   maxPerBowler: number;
   powerPlay: number;
 }
 
-export const firstInningsTimeLost = (
-  total: number,
-  oversTarget: number,
-  oversCompleted: number,
-  minutesLost: number,
-  teaTaken: boolean,
-): Response => {
-  const runRate = total / oversTarget;
-  const overMinutes = 8;
-  let minutesLostIncTea = teaTaken ? minutesLost - 30 : minutesLost;
-  // Remove the 30 free minutes
-  minutesLostIncTea = minutesLostIncTea - 30;
-  minutesLostIncTea = Math.floor(minutesLostIncTea / overMinutes) * overMinutes;
-  const oversLost = minutesLostIncTea / overMinutes;
-  const overs = oversTarget - oversLost + (oversTarget - Math.ceil(oversCompleted));
-  const targetRunRate = ((100 + (oversTarget - overs) * 1.5) * runRate) / 100;
+const config = {
+  startingOvers: 45,
+  overMinutes: 4,
+  teaLength: 20,
+  freeTime: 30,
+  minOversCutoff: 20
+}
 
-  if (overs < 20) {
+export const matchStartLate = (
+  minutesLost: number,
+  teaTaken: boolean = false,
+): Response => {
+  let minutesLostIncTea = teaTaken ? minutesLost - config.teaLength : minutesLost;
+  minutesLostIncTea = minutesLostIncTea - config.freeTime;
+  let overs = config.startingOvers;
+  if (minutesLostIncTea > 0) {
+    overs = config.startingOvers - Math.ceil(minutesLostIncTea / (config.overMinutes * 2))
+  }
+
+  if (overs < config.minOversCutoff) {
     throw Error('Less than 20 overs available - ABANDON GAME');
   }
-
-  if (minutesLostIncTea < 0) {
-    throw Error('Not enough time lost - no change in game conditions');
+ 
+  return {
+    overs,
+    maxPerBowler: Math.floor(overs / 5),
+    powerPlay: calculatePowerPlay(overs),
   }
+}
 
+const calculatePowerPlay = (overs: number) => {
   let powerPlay = 6;
   if (overs >= 20 && overs <= 23) {
     powerPlay = 6;
@@ -46,11 +52,38 @@ export const firstInningsTimeLost = (
   } else if (overs >= 40 && overs <= 45) {
     powerPlay = 12;
   }
+  return powerPlay;
+}
+
+export const firstInningsTimeLost = (
+  total: number,
+  oversCompleted: number,
+  minutesLost: number,
+  teaTaken: boolean = false,
+  oversTarget: number = config.startingOvers,
+): Response => {
+  const runRate = total / oversTarget;
+  const overMinutes = config.overMinutes;
+  let minutesLostIncTea = teaTaken ? minutesLost - config.teaLength : minutesLost;
+  // Remove the 30 free minutes
+  minutesLostIncTea = minutesLostIncTea - config.freeTime;
+  minutesLostIncTea = Math.ceil(minutesLostIncTea / overMinutes) * overMinutes;
+  let overs = config.startingOvers;
+  if (minutesLostIncTea > 0) {
+    const oversLost = minutesLostIncTea / overMinutes;
+    overs = oversTarget - oversLost + (oversTarget - Math.ceil(oversCompleted));
+  }
+
+  const targetRunRate = ((100 + (oversTarget - overs) * 1.5) * runRate) / 100;
+
+  if (overs < config.minOversCutoff) {
+    throw Error('Less than 20 overs available - ABANDON GAME');
+  }
 
   return {
     maxPerBowler: Math.floor(overs / 5),
     overs,
-    powerPlay,
+    powerPlay: calculatePowerPlay(overs),
     target: Math.ceil(targetRunRate * overs),
   };
 };
